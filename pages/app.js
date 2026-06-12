@@ -2,7 +2,7 @@
 const WA = "919469793349";
 
 // ⚠️ SET THIS after deploying your Cloudflare Worker:
-const BACKEND_URL = ""; // e.g. "https://hydroshine-api.yourname.workers.dev"
+const BACKEND_URL = " https://hydroshine-api.amitkumar300ee.workers.dev"; // e.g. "https://hydroshine-api.yourname.workers.dev"
 
 // ───────────── AUTH STORAGE (in-memory + localStorage fallback handled by Worker via token) ─────────────
 function getToken() {
