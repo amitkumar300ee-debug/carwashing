@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — HydroShine Jammu Bookings</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="app.css">
+<style>
+body{max-width:600px}
+.admin-login{padding:40px 20px}
+.stat-row{display:flex;gap:10px;padding:0 16px 16px;flex-wrap:wrap}
+.stat-box{flex:1;min-width:80px;background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:12px;text-align:center}
+.stat-box .sn{font-size:1.3rem;font-weight:900;color:var(--teal)}
+.stat-box .sl{font-size:.65rem;color:var(--gray);font-weight:600;text-transform:uppercase}
+.filter-row{display:flex;gap:8px;padding:0 16px 12px;overflow-x:auto}
+.filter-chip{flex-shrink:0;padding:7px 14px;border-radius:100px;font-size:.75rem;font-weight:700;border:1.5px solid var(--border);background:var(--card);color:var(--gray);cursor:pointer;transition:all .2s}
+.filter-chip.active{background:var(--teal);color:#fff;border-color:var(--teal)}
+.bk-admin-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.bk-admin-actions button{flex:1;min-width:80px;padding:9px;border-radius:9px;font-size:.74rem;font-weight:700;border:1.5px solid var(--border);background:#fff;transition:all .2s}
+.bk-admin-actions .btn-confirm{color:var(--teal);border-color:rgba(0,191,165,.3)}
+.bk-admin-actions .btn-confirm:hover{background:var(--teal);color:#fff}
+.bk-admin-actions .btn-reject{color:#EF4444;border-color:rgba(239,68,68,.3)}
+.bk-admin-actions .btn-reject:hover{background:#EF4444;color:#fff}
+.bk-admin-actions .btn-complete{color:#6366F1;border-color:rgba(99,102,241,.3)}
+.bk-admin-actions .btn-complete:hover{background:#6366F1;color:#fff}
+.bk-admin-actions .btn-call{color:var(--gray);border-color:var(--border)}
+.bk-admin-actions .btn-call:hover{background:var(--dark);color:#fff;border-color:var(--dark)}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-logo" style="font-size:.95rem"><div class="logo-ic">💧</div>HYDRO<span class="shine">SHINE</span> <span style="font-size:.65em;font-weight:600;opacity:.85">JAMMU</span> · Admin</div>
+</header>
+
+<!-- ADMIN LOGIN -->
+<div id="adminLogin" style="display:none">
+  <div class="book-box rv" style="margin-top:30px">
+    <h2>🔐 Admin Login</h2>
+    <div class="fg"><label>Admin Key</label><input class="fc" type="password" id="admin_key" placeholder="Enter your admin key"></div>
+    <button class="sub-btn" onclick="adminLogin()">Login</button>
+    <div class="toast" id="adminToast"></div>
+  </div>
+</div>
+
+<!-- ADMIN DASHBOARD -->
+<div id="adminDash" style="display:none">
+
+  <div class="filter-row main-tabs rv" style="padding-top:16px">
+    <div class="filter-chip active" data-tab="bookings" onclick="setMainTab('bookings')">📋 Bookings</div>
+    <div class="filter-chip" data-tab="pricing" onclick="setMainTab('pricing')">💰 Pricing &amp; Offers</div>
+  </div>
+
+  <!-- ═══════ BOOKINGS TAB ═══════ -->
+  <div id="tabBookings">
+    <div class="stat-row rv">
+      <div class="stat-box"><div class="sn" id="statPending">0</div><div class="sl">Pending</div></div>
+      <div class="stat-box"><div class="sn" id="statConfirmed">0</div><div class="sl">Confirmed</div></div>
+      <div class="stat-box"><div class="sn" id="statCompleted">0</div><div class="sl">Done</div></div>
+      <div class="stat-box"><div class="sn" id="statTotal">0</div><div class="sl">Total</div></div>
+    </div>
+
+    <div class="filter-row rv">
+      <div class="filter-chip active" data-f="all" onclick="setFilter('all')">All</div>
+      <div class="filter-chip" data-f="pending" onclick="setFilter('pending')">Pending</div>
+      <div class="filter-chip" data-f="confirmed" onclick="setFilter('confirmed')">Confirmed</div>
+      <div class="filter-chip" data-f="cancelled" onclick="setFilter('cancelled')">Cancelled</div>
+      <div class="filter-chip" data-f="completed" onclick="setFilter('completed')">Completed</div>
+    </div>
+
+    <div class="sec rv">
+      <div class="sec-head">
+        <h2>Bookings</h2>
+        <button class="view-all" onclick="loadAdminBookings()" style="border:none">🔄 Refresh</button>
+      </div>
+      <div id="adminList"></div>
+    </div>
+  </div>
+
+  <!-- ═══════ PRICING & OFFERS TAB ═══════ -->
+  <div id="tabPricing" style="display:none">
+    <div class="sec rv">
+      <div class="sec-head">
+        <h2>🎉 Offer Banner</h2>
+      </div>
+      <div class="book-box" style="margin:0">
+        <div class="frow2">
+          <div class="fg"><label>Offer Title</label><input class="fc" id="p_offer_text" placeholder="Special Intro Offer"></div>
+          <div class="fg"><label>Offer Amount</label><input class="fc" id="p_offer_amount" placeholder="₹100 OFF"></div>
+        </div>
+        <div class="fg"><label>Offer Subtext</label><input class="fc" id="p_offer_subtext" placeholder="for First 20 Customers!"></div>
+      </div>
+    </div>
+
+    <div class="sec rv">
+      <div class="sec-head"><h2>🚗 Service Prices</h2></div>
+      <div class="book-box" style="margin:0">
+        <h2 style="font-size:.85rem;margin-bottom:10px">Hatchback Wash</h2>
+        <div class="frow2">
+          <div class="fg"><label>Min Price (₹)</label><input class="fc" type="number" id="p_hatchback_min" placeholder="299"></div>
+          <div class="fg"><label>Max Price (₹)</label><input class="fc" type="number" id="p_hatchback_max" placeholder="399"></div>
+        </div>
+        <h2 style="font-size:.85rem;margin:18px 0 10px">Sedan Wash</h2>
+        <div class="frow2">
+          <div class="fg"><label>Min Price (₹)</label><input class="fc" type="number" id="p_sedan_min" placeholder="399"></div>
+          <div class="fg"><label>Max Price (₹)</label><input class="fc" type="number" id="p_sedan_max" placeholder="499"></div>
+        </div>
+        <h2 style="font-size:.85rem;margin:18px 0 10px">SUV / MUV Wash</h2>
+        <div class="frow2">
+          <div class="fg"><label>Min Price (₹)</label><input class="fc" type="number" id="p_suv_min" placeholder="499"></div>
+          <div class="fg"><label>Max Price (₹)</label><input class="fc" type="number" id="p_suv_max" placeholder="699"></div>
+        </div>
+        <h2 style="font-size:.85rem;margin:18px 0 10px">Bike / Scooter Wash</h2>
+        <div class="fg"><label>Price (₹)</label><input class="fc" type="number" id="p_bike_price" placeholder="250"></div>
+        <h2 style="font-size:.85rem;margin:18px 0 10px">Premium Detailing</h2>
+        <div class="fg"><label>Price (₹) — shown as "₹999+"</label><input class="fc" type="number" id="p_premium_price" placeholder="999"></div>
+      </div>
+    </div>
+
+    <div class="sec rv">
+      <div class="sec-head"><h2>➕ Add-On Prices</h2></div>
+      <div class="book-box" style="margin:0">
+        <div class="frow2">
+          <div class="fg"><label>Interior Vacuum (₹)</label><input class="fc" type="number" id="p_addon_vacuum" placeholder="199"></div>
+          <div class="fg"><label>Dashboard Polish (₹)</label><input class="fc" type="number" id="p_addon_dashboard" placeholder="99"></div>
+        </div>
+        <div class="frow2">
+          <div class="fg"><label>Tyre Polish (₹)</label><input class="fc" type="number" id="p_addon_tyre" placeholder="99"></div>
+          <div class="fg"><label>Glass Cleaning (₹)</label><input class="fc" type="number" id="p_addon_glass" placeholder="99"></div>
+        </div>
+        <div class="fg"><label>Interior Deep Clean (₹) — shown as "₹499+"</label><input class="fc" type="number" id="p_addon_deepclean" placeholder="499"></div>
+      </div>
+    </div>
+
+    <div class="sec rv">
+      <div class="sec-head"><h2>🖼️ Hero Slider Offers</h2></div>
+      <div class="book-box" style="margin:0">
+        <h2 style="font-size:.85rem;margin-bottom:10px">Slide 1 — Exterior Wash</h2>
+        <div class="fg"><label>Title</label><input class="fc" id="p_slide1_title" placeholder="Professional Car Wash at Your Doorstep"></div>
+        <div class="fg"><label>Subtitle</label><input class="fc" id="p_slide1_sub" placeholder="Shine Your Car Without Leaving Home"></div>
+        <div class="frow2">
+          <div class="fg"><label>New Price (₹)</label><input class="fc" type="number" id="p_slide1_new" placeholder="299"></div>
+          <div class="fg"><label>Old Price (₹)</label><input class="fc" type="number" id="p_slide1_old" placeholder="399"></div>
+        </div>
+
+        <h2 style="font-size:.85rem;margin:18px 0 10px">Slide 2 — Steam Wash</h2>
+        <div class="fg"><label>Title</label><input class="fc" id="p_slide2_title" placeholder="Deep Steam Wash + Interior Clean"></div>
+        <div class="fg"><label>Subtitle</label><input class="fc" id="p_slide2_sub" placeholder="Complete inside-out car spa experience"></div>
+        <div class="frow2">
+          <div class="fg"><label>New Price (₹)</label><input class="fc" type="number" id="p_slide2_new" placeholder="399"></div>
+          <div class="fg"><label>Old Price (₹)</label><input class="fc" type="number" id="p_slide2_old" placeholder="599"></div>
+        </div>
+
+        <h2 style="font-size:.85rem;margin:18px 0 10px">Slide 3 — Bike Wash</h2>
+        <div class="fg"><label>Title</label><input class="fc" id="p_slide3_title" placeholder="Bike & Scooter Doorstep Wash"></div>
+        <div class="fg"><label>Subtitle</label><input class="fc" id="p_slide3_sub" placeholder="Full two-wheeler clean at your location"></div>
+        <div class="frow2">
+          <div class="fg"><label>New Price (₹)</label><input class="fc" type="number" id="p_slide3_new" placeholder="250"></div>
+          <div class="fg"><label>Old Price (₹)</label><input class="fc" type="number" id="p_slide3_old" placeholder="350"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec rv" style="padding-top:0">
+      <button class="sub-btn" id="savePricingBtn" onclick="savePricing()"><span id="savePricingTxt">💾 Save All Pricing &amp; Offers</span><div class="sp" id="savePricingSp"></div></button>
+      <div class="toast" id="pricingToast"></div>
+    </div>
+  </div>
+
+</div>
+
+
+<script>window.HS_PAGE="admin";</script>
+<script src="app.js"></script>
+<script>
+let adminKey = '';
+let allBookings = [];
+let currentFilter = 'all';
+
+const STATUS_LABELS = {
+  pending: { label: '⏳ Pending', cls: 'pending' },
+  confirmed: { label: '✅ Confirmed', cls: 'confirmed' },
+  cancelled: { label: '🚫 Cancelled', cls: 'cancelled' },
+  rejected: { label: '❌ Rejected', cls: 'rejected' },
+  completed: { label: '🎉 Completed', cls: 'completed' },
+};
+
+function adminLogin(){
+  const key = document.getElementById('admin_key').value.trim();
+  if(!key){ showAdminToast('Enter admin key'); return; }
+  adminKey = key;
+  try{ sessionStorage.setItem('hs_admin_key', key); }catch(e){}
+  document.getElementById('adminLogin').style.display='none';
+  document.getElementById('adminDash').style.display='block';
+  loadAdminBookings();
+}
+
+function showAdminToast(msg){
+  const t = document.getElementById('adminToast');
+  t.className='toast bad'; t.textContent=msg; t.style.display='block';
+  setTimeout(()=>t.style.display='none',4000);
+}
+
+function setMainTab(tab){
+  document.querySelectorAll('.main-tabs > .filter-chip[data-tab]').forEach(c=>c.classList.toggle('active', c.dataset.tab===tab));
+  document.getElementById('tabBookings').style.display = tab==='bookings' ? 'block' : 'none';
+  document.getElementById('tabPricing').style.display = tab==='pricing' ? 'block' : 'none';
+  if(tab==='pricing') loadPricingAdmin();
+}
+
+function setFilter(f){
+  currentFilter = f;
+  document.querySelectorAll('.filter-chip[data-f]').forEach(c=>c.classList.toggle('active', c.dataset.f===f));
+  renderAdminList();
+}
+
+async function loadAdminBookings(){
+  if(!BACKEND_URL){
+    document.getElementById('adminList').innerHTML = '<div class="empty-state"><div class="es-icon">⚙️</div><h3>Backend Not Configured</h3><p>Set BACKEND_URL in app.js first.</p></div>';
+    return;
+  }
+  try{
+    const res = await fetch(BACKEND_URL + '/api/admin/bookings', { headers: { 'x-admin-key': adminKey } });
+    const j = await res.json();
+    if(j.success){
+      allBookings = j.bookings;
+      updateStats();
+      renderAdminList();
+    } else {
+      showAdminToast(j.message || 'Failed to load');
+      if(res.status === 401){
+        document.getElementById('adminLogin').style.display='block';
+        document.getElementById('adminDash').style.display='none';
+      }
+    }
+  }catch(e){
+    showAdminToast('Connection error');
+  }
+}
+
+function updateStats(){
+  document.getElementById('statPending').textContent = allBookings.filter(b=>b.status==='pending').length;
+  document.getElementById('statConfirmed').textContent = allBookings.filter(b=>b.status==='confirmed').length;
+  document.getElementById('statCompleted').textContent = allBookings.filter(b=>b.status==='completed').length;
+  document.getElementById('statTotal').textContent = allBookings.length;
+}
+
+function renderAdminList(){
+  const list = document.getElementById('adminList');
+  let bookings = allBookings;
+  if(currentFilter !== 'all') bookings = bookings.filter(b=>b.status===currentFilter);
+
+  if(bookings.length === 0){
+    list.innerHTML = '<div class="empty-state"><div class="es-icon">📭</div><h3>No bookings</h3><p>Nothing to show in this filter.</p></div>';
+    return;
+  }
+
+  list.innerHTML = bookings.map(b=>{
+    const st = STATUS_LABELS[b.status] || STATUS_LABELS.pending;
+    let actions = '';
+    if(b.status === 'pending'){
+      actions = `
+        <button class="btn-confirm" onclick="updateBooking(${b.id},'confirm')">✅ Confirm</button>
+        <button class="btn-reject" onclick="updateBooking(${b.id},'reject')">❌ Reject</button>
+      `;
+    } else if(b.status === 'confirmed'){
+      actions = `<button class="btn-complete" onclick="updateBooking(${b.id},'complete')">🎉 Mark Done</button>`;
+    }
+    actions += `<button class="btn-call" onclick="window.open('tel:${b.phone}')">📞 Call</button>`;
+    actions += `<button class="btn-call" onclick="window.open('https://wa.me/91${b.phone.replace(/[^0-9]/g,'').slice(-10)}')">💬 WhatsApp</button>`;
+
+    return `
+      <div class="bk-card">
+        <div class="bk-top">
+          <div class="bk-service">${b.name} · ${b.service}</div>
+          <div class="bk-status ${st.cls}">${st.label}</div>
+        </div>
+        <div class="bk-row"><span class="bi">📞</span> ${b.phone}</div>
+        <div class="bk-row"><span class="bi">📅</span> ${b.date} · ${b.time}</div>
+        <div class="bk-row"><span class="bi">📍</span> ${b.address}</div>
+        ${b.addon && b.addon!=='None' ? `<div class="bk-row"><span class="bi">➕</span> ${b.addon}</div>` : ''}
+        ${b.notes && b.notes!=='None' ? `<div class="bk-row"><span class="bi">📝</span> ${b.notes}</div>` : ''}
+        <div class="bk-row"><span class="bi">🕐</span> ${new Date(b.created_at).toLocaleString('en-IN')}</div>
+        <div class="bk-admin-actions">${actions}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function updateBooking(id, action){
+  try{
+    const res = await fetch(`${BACKEND_URL}/api/admin/booking/${id}/${action}`, {
+      method:'POST', headers:{'x-admin-key':adminKey}
+    });
+    const j = await res.json();
+    if(j.success) loadAdminBookings();
+    else showAdminToast(j.message||'Failed');
+  }catch(e){ showAdminToast('Connection error'); }
+}
+
+// ═══════════ PRICING & OFFERS ═══════════
+let currentPricing = null;
+
+async function loadPricingAdmin(){
+  if(!BACKEND_URL){
+    showAdminToast('Backend not configured');
+    return;
+  }
+  try{
+    const res = await fetch(BACKEND_URL + '/api/settings/pricing');
+    const j = await res.json();
+    if(j.success){
+      currentPricing = j.pricing;
+      fillPricingForm(currentPricing);
+    } else {
+      showAdminToast(j.message || 'Failed to load pricing');
+    }
+  }catch(e){
+    showAdminToast('Connection error loading pricing');
+  }
+}
+
+function fillPricingForm(p){
+  const s = p.services || {};
+  const a = p.addons || {};
+  const sl = p.slides || {};
+
+  document.getElementById('p_offer_text').value = p.offer_text || '';
+  document.getElementById('p_offer_amount').value = p.offer_amount || '';
+  document.getElementById('p_offer_subtext').value = p.offer_subtext || '';
+
+  if(s.hatchback){ document.getElementById('p_hatchback_min').value = s.hatchback.price_min; document.getElementById('p_hatchback_max').value = s.hatchback.price_max; }
+  if(s.sedan){ document.getElementById('p_sedan_min').value = s.sedan.price_min; document.getElementById('p_sedan_max').value = s.sedan.price_max; }
+  if(s.suv){ document.getElementById('p_suv_min').value = s.suv.price_min; document.getElementById('p_suv_max').value = s.suv.price_max; }
+  if(s.bike){ document.getElementById('p_bike_price').value = s.bike.price; }
+  if(s.premium){ document.getElementById('p_premium_price').value = s.premium.price; }
+
+  if(a.interior_vacuum){ document.getElementById('p_addon_vacuum').value = a.interior_vacuum.price; }
+  if(a.dashboard_polish){ document.getElementById('p_addon_dashboard').value = a.dashboard_polish.price; }
+  if(a.tyre_polish){ document.getElementById('p_addon_tyre').value = a.tyre_polish.price; }
+  if(a.glass_cleaning){ document.getElementById('p_addon_glass').value = a.glass_cleaning.price; }
+  if(a.interior_deep_clean){ document.getElementById('p_addon_deepclean').value = a.interior_deep_clean.price; }
+
+  if(sl.slide1){ document.getElementById('p_slide1_title').value = sl.slide1.title||''; document.getElementById('p_slide1_sub').value = sl.slide1.subtitle||''; document.getElementById('p_slide1_new').value = sl.slide1.price_new; document.getElementById('p_slide1_old').value = sl.slide1.price_old; }
+  if(sl.slide2){ document.getElementById('p_slide2_title').value = sl.slide2.title||''; document.getElementById('p_slide2_sub').value = sl.slide2.subtitle||''; document.getElementById('p_slide2_new').value = sl.slide2.price_new; document.getElementById('p_slide2_old').value = sl.slide2.price_old; }
+  if(sl.slide3){ document.getElementById('p_slide3_title').value = sl.slide3.title||''; document.getElementById('p_slide3_sub').value = sl.slide3.subtitle||''; document.getElementById('p_slide3_new').value = sl.slide3.price_new; document.getElementById('p_slide3_old').value = sl.slide3.price_old; }
+}
+
+function num(id){
+  const v = document.getElementById(id).value;
+  return v === '' ? 0 : Number(v);
+}
+function str(id){
+  return document.getElementById(id).value.trim();
+}
+
+async function savePricing(){
+  const payload = {
+    offer_text: str('p_offer_text'),
+    offer_amount: str('p_offer_amount'),
+    offer_subtext: str('p_offer_subtext'),
+    services: {
+      hatchback: { label: 'Hatchback Wash', price_min: num('p_hatchback_min'), price_max: num('p_hatchback_max') },
+      sedan: { label: 'Sedan Wash', price_min: num('p_sedan_min'), price_max: num('p_sedan_max') },
+      suv: { label: 'SUV / MUV Wash', price_min: num('p_suv_min'), price_max: num('p_suv_max') },
+      bike: { label: 'Bike / Scooter Wash', price: num('p_bike_price') },
+      premium: { label: 'Premium Detailing', price: num('p_premium_price') },
+    },
+    addons: {
+      interior_vacuum: { label: 'Interior Vacuum', price: num('p_addon_vacuum') },
+      dashboard_polish: { label: 'Dashboard Polish', price: num('p_addon_dashboard') },
+      tyre_polish: { label: 'Tyre Polish', price: num('p_addon_tyre') },
+      glass_cleaning: { label: 'Glass Cleaning', price: num('p_addon_glass') },
+      interior_deep_clean: { label: 'Interior Deep Clean', price: num('p_addon_deepclean') },
+    },
+    slides: {
+      slide1: { title: str('p_slide1_title'), subtitle: str('p_slide1_sub'), price_new: num('p_slide1_new'), price_old: num('p_slide1_old') },
+      slide2: { title: str('p_slide2_title'), subtitle: str('p_slide2_sub'), price_new: num('p_slide2_new'), price_old: num('p_slide2_old') },
+      slide3: { title: str('p_slide3_title'), subtitle: str('p_slide3_sub'), price_new: num('p_slide3_new'), price_old: num('p_slide3_old') },
+    },
+  };
+
+  const btn=document.getElementById('savePricingBtn'), txt=document.getElementById('savePricingTxt'), sp=document.getElementById('savePricingSp');
+  btn.disabled=true; txt.textContent='Saving…'; sp.style.display='block';
+
+  try{
+    const res = await fetch(BACKEND_URL + '/api/admin/settings/pricing', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-admin-key':adminKey},
+      body: JSON.stringify(payload)
+    });
+    const j = await res.json();
+    const t = document.getElementById('pricingToast');
+    if(j.success){
+      t.className='toast ok'; t.textContent='✅ Pricing & offers updated successfully!';
+    } else {
+      t.className='toast bad'; t.textContent='❌ ' + (j.message||'Save failed');
+    }
+    t.style.display='block';
+    setTimeout(()=>t.style.display='none', 5000);
+  }catch(e){
+    const t = document.getElementById('pricingToast');
+    t.className='toast bad'; t.textContent='❌ Connection error'; t.style.display='block';
+  }
+  btn.disabled=false; txt.textContent='💾 Save All Pricing & Offers'; sp.style.display='none';
+}
+
+// INIT - check saved admin key
+try{
+  const saved = sessionStorage.getItem('hs_admin_key');
+  if(saved){
+    adminKey = saved;
+    document.getElementById('adminDash').style.display='block';
+    loadAdminBookings();
+  } else {
+    document.getElementById('adminLogin').style.display='block';
+  }
+}catch(e){
+  document.getElementById('adminLogin').style.display='block';
+}
+</script>
+</body>
+</html>
